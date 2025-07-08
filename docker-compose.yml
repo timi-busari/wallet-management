@@ -32,6 +32,29 @@ services:
       --maxmemory 512mb
       --maxmemory-policy allkeys-lru
 
+  wallet-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wallet-app
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://wallet_user:wallet_password@postgres:5432/wallet_system
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      API_KEY: ${API_KEY:-6pfrn00011248xivxkz0t}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: ["npm", "run", "start:dev"]
+
 volumes:
   postgres_data:
   redis_data:
