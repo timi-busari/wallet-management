@@ -197,7 +197,7 @@ export class WalletService {
 
     // checking for idempotency using the reference ID
     const existingTransactions = await this.prisma.transaction.findMany({
-      where: { referenceId }, 
+      where: { referenceId },
     });
 
     if (existingTransactions.length > 0) {
@@ -219,8 +219,8 @@ export class WalletService {
     const transactions = await this.prisma.$transaction([
       this.prisma.transaction.create({
         data: {
-          transactionId: uuidv4(), 
-          referenceId, 
+          transactionId: uuidv4(),
+          referenceId,
           walletId: sourceWalletId,
           destinationWalletId,
           amount,
@@ -231,8 +231,8 @@ export class WalletService {
       }),
       this.prisma.transaction.create({
         data: {
-          transactionId: uuidv4(), 
-          referenceId, 
+          transactionId: uuidv4(),
+          referenceId,
           walletId: destinationWalletId,
           destinationWalletId: sourceWalletId,
           amount,
@@ -249,7 +249,7 @@ export class WalletService {
       destinationWalletId,
       amount: amount.toString(),
       description,
-      referenceId, 
+      referenceId,
     });
 
     return transactions;
@@ -320,12 +320,22 @@ export class WalletService {
         });
 
         if (!wallet) {
+          await prisma.transaction.updateMany({
+            where: { transactionId },
+            data: { status: TransactionStatus.CANCELLED },
+          });
+
           throw new NotFoundException('Wallet not found');
         }
 
         // check for sufficient funds
         const currentBalance = new Decimal(wallet.balance);
         if (currentBalance.lt(amountDecimal)) {
+          await prisma.transaction.updateMany({
+            where: { transactionId },
+            data: { status: TransactionStatus.CANCELLED },
+          });
+
           throw new BadRequestException('Insufficient funds');
         }
 

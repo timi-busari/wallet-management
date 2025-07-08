@@ -742,26 +742,29 @@ describe('WalletService', () => {
         updatedAt: new Date(),
       };
 
+      const mockUpdateMany = jest.fn().mockResolvedValue({ count: 1 });
+
       mockPrismaService.executeTransaction.mockImplementation(
         async (callback) => {
           const mockPrismaTransaction = {
             wallet: {
               findUnique: jest.fn().mockResolvedValue(mockWallet),
             },
+            transaction: {
+              updateMany: mockUpdateMany,
+            },
           };
           return callback(mockPrismaTransaction);
         },
       );
 
-      mockPrismaService.transaction.updateMany.mockResolvedValue({ count: 1 });
-
       await expect(service.processWithdrawal(withdrawalData)).rejects.toThrow(
         BadRequestException,
       );
 
-      expect(mockPrismaService.transaction.updateMany).toHaveBeenCalledWith({
+      expect(mockUpdateMany).toHaveBeenCalledWith({
         where: { transactionId: 'tx-123' },
-        data: { status: TransactionStatus.FAILED },
+        data: { status: TransactionStatus.CANCELLED },
       });
     });
   });
