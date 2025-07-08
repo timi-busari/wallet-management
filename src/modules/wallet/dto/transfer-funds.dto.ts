@@ -1,0 +1,23 @@
+import { IsString, IsNumber, IsOptional, Min } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { Decimal } from 'decimal.js';
+import { IsDecimalMin } from 'src/utils/validator.utils';
+
+export class TransferFundsDto {
+  @IsString()
+  sourceWalletId: string;
+
+  @IsString()
+  destinationWalletId: string;
+
+  @IsDecimalMin(0.01)
+  @Transform(({ value }) => new Decimal(value))
+  amount: Decimal;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsString()
+  referenceId: string;
+}
